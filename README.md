@@ -1,2 +1,2 @@
-# esl
-freeswitch esl
+# eslgo
+freeswitch esl go
