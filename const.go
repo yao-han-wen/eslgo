@@ -2,8 +2,9 @@ package eslgo
 
 import "errors"
 
+const OPT_CONNECT_TIMEOUT = 10
+const OPT_COMMAND_TIMEOUT = 10
 const OPT_EVENT_CHANNEL_CAPACITY = 8
-const OPT_CMD_TIMEOUT = 10
 
 const CONTENT_TYPE_AUTH_REQUEST = "auth/request"
 const CONTENT_TYPE_COMMAND_REPLY = "command/reply"

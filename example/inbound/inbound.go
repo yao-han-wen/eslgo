@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	client, err := eslgo.NewInboundSocket("192.168.101.97:8021", "ClueCon", eslgo.WithCmdTimeout(5))
+	client, err := eslgo.NewInboundSocket("192.168.101.97:8021", "ClueCon", eslgo.WithConnectTimeout(10))
 	if err != nil {
 		log.Println(err)
 		return
@@ -20,26 +20,26 @@ func main() {
 		eventChan, err := client.SendEventCommand("event xml ALL")
 		// eventChan, err := client.SendEventCommand("event json ALL")
 		if err != nil {
-			log.Println("SendEventCommand error", err)
+			log.Println("SendEventCommand error:", err)
 			return
 		}
 
-		jobUuid, err := client.SendBgApiCommand("status")
+		jobUUID, err := client.SendBgApiCommand("status")
 		if err != nil {
-			log.Println("SendBgApiCommand error", err)
+			log.Println("SendBgApiCommand error:", err)
 			return
 		}
-		log.Println("bgapi 指令结果：" + jobUuid)
+		log.Println("bgapi result, jobUUID:" + jobUUID)
 
 		rsApi, err := client.SendApiCommand("status")
 		if err != nil {
-			log.Println("SendApiCommand error", err)
+			log.Println("SendApiCommand error:", err)
 			return
 		}
-		log.Println("api 指令结果：" + rsApi)
+		log.Println("api result:" + rsApi)
 
 		for e := range eventChan {
-			log.Println(e)
+			log.Println("event:", e)
 		}
 	}()
 

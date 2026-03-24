@@ -7,8 +7,29 @@ type JobUUID string
 type Option func(*Config)
 
 type Config struct {
-	eventChanCap uint
-	cmdTimeOut   time.Duration
+	connectTimeOut time.Duration
+	commandTimeOut time.Duration
+	eventChanCap   uint
+}
+
+func WithConnectTimeout(second uint) Option {
+	return func(cfg *Config) {
+		if second == 0 {
+			cfg.connectTimeOut = time.Duration(OPT_CONNECT_TIMEOUT) * time.Second
+			return
+		}
+		cfg.connectTimeOut = time.Duration(second) * time.Second
+	}
+}
+
+func WithCommandTimeout(second uint) Option {
+	return func(cfg *Config) {
+		if second == 0 {
+			cfg.commandTimeOut = time.Duration(OPT_COMMAND_TIMEOUT) * time.Second
+			return
+		}
+		cfg.commandTimeOut = time.Duration(second) * time.Second
+	}
 }
 
 func WithEventChanCap(num uint) Option {
@@ -18,15 +39,5 @@ func WithEventChanCap(num uint) Option {
 			return
 		}
 		cfg.eventChanCap = num
-	}
-}
-
-func WithCmdTimeout(second uint) Option {
-	return func(cfg *Config) {
-		if second == 0 {
-			cfg.cmdTimeOut = time.Duration(OPT_CMD_TIMEOUT) * time.Second
-			return
-		}
-		cfg.cmdTimeOut = time.Duration(second) * time.Second
 	}
 }

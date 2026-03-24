@@ -27,15 +27,16 @@ type InboundSocket struct {
 
 func NewInboundSocket(addr, passwd string, options ...Option) (*InboundSocket, error) {
 	config := &Config{
-		eventChanCap: OPT_EVENT_CHANNEL_CAPACITY,
-		cmdTimeOut:   OPT_CMD_TIMEOUT * time.Second,
+		connectTimeOut: OPT_CONNECT_TIMEOUT * time.Second,
+		commandTimeOut: OPT_COMMAND_TIMEOUT * time.Second,
+		eventChanCap:   OPT_EVENT_CHANNEL_CAPACITY,
 	}
 	// 应用选项
 	for _, opt := range options {
 		opt(config)
 	}
 
-	conn, err := net.Dial("tcp", addr)
+	conn, err := net.DialTimeout("tcp", addr, config.connectTimeOut)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +165,7 @@ func (is *InboundSocket) SendCommand(cmd string) (*Response, error) {
 		return nil, err
 	}
 
-	timer := time.NewTimer(is.config.cmdTimeOut)
+	timer := time.NewTimer(is.config.commandTimeOut)
 	defer timer.Stop()
 
 	select {
