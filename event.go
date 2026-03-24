@@ -84,7 +84,11 @@ func (e *Event) ParseXMLToEvent(data []byte) error {
 	for {
 		token, err := decoder.Token()
 		if err != nil {
-			break
+			if err == io.EOF {
+				break
+			} else {
+				return err
+			}
 		}
 
 		switch t := token.(type) {

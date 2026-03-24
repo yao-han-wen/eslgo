@@ -15,5 +15,5 @@ const CONTENT_TYPE_TEXT_EVENT_JSON = "text/event-json"
 
 var ErrNoResponseToAuthRequest = errors.New("No response to auth/request")
 var ErrInvalidPassword = errors.New("Invalid password")
-var ErrTimeout = errors.New("Timeout")
+var ErrCommandTimeout = errors.New("Command Timeout")
 var ErrConnectClosed = errors.New("Connect closed")

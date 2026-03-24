@@ -8,6 +8,7 @@ import (
 	"net/textproto"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -17,9 +18,11 @@ type InboundSocket struct {
 	reader     *bufio.Reader
 	mimeReader *textproto.Reader
 
+	cmdMux      sync.Mutex
 	cmdChan     chan *Response
 	eventChan   chan *Event
 	closeNotify chan error
+	closeOnce   sync.Once
 }
 
 func NewInboundSocket(addr, passwd string, options ...Option) (*InboundSocket, error) {
@@ -79,7 +82,15 @@ func NewInboundSocket(addr, passwd string, options ...Option) (*InboundSocket, e
 }
 
 func (is *InboundSocket) Close() {
-	is.conn.Close()
+	is.close(nil)
+}
+
+func (is *InboundSocket) close(err error) {
+	is.closeOnce.Do(
+		func() {
+			is.conn.Close()
+			is.closeNotify <- err
+		})
 }
 
 func (is *InboundSocket) CloseNotify() <-chan error {
@@ -96,8 +107,7 @@ func (is *InboundSocket) recvLoop() {
 	}
 
 	//出错直接关闭连接
-	is.conn.Close()
-	is.closeNotify <- err
+	is.close(err)
 
 	close(is.cmdChan)
 	close(is.eventChan)
@@ -145,8 +155,11 @@ func (is *InboundSocket) recv() error {
 	return nil
 }
 
-func (is *InboundSocket) SendCommand(str string) (*Response, error) {
-	_, err := fmt.Fprintf(is.conn, "%s\r\n\r\n", str)
+func (is *InboundSocket) SendCommand(cmd string) (*Response, error) {
+	is.cmdMux.Lock()
+	defer is.cmdMux.Unlock()
+
+	_, err := fmt.Fprintf(is.conn, "%s\r\n\r\n", cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -161,19 +174,20 @@ func (is *InboundSocket) SendCommand(str string) (*Response, error) {
 		}
 		return resp, nil
 	case <-timer.C:
-		is.Close()
-		return nil, ErrTimeout
+		//命令异常会导致后续指令获取错误，这里直接关闭连接
+		is.close(ErrCommandTimeout)
+		return nil, ErrCommandTimeout
 	}
 }
 
 // 订阅event消息
-func (is *InboundSocket) SendEventCommand(str string) (<-chan *Event, error) {
-	str = strings.TrimSpace(str)
-	if !strings.HasPrefix(str, "event") {
-		str = "event " + str
+func (is *InboundSocket) SendEventCommand(cmd string) (<-chan *Event, error) {
+	cmd = strings.TrimSpace(cmd)
+	if !strings.HasPrefix(cmd, "event") {
+		cmd = "event " + cmd
 	}
 
-	resp, err := is.SendCommand(str)
+	resp, err := is.SendCommand(cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -186,13 +200,13 @@ func (is *InboundSocket) SendEventCommand(str string) (<-chan *Event, error) {
 }
 
 // 发送同步api指令
-func (is *InboundSocket) SendApiCommand(str string) (string, error) {
-	str = strings.TrimSpace(str)
-	if !strings.HasPrefix(str, "api") {
-		str = "api " + str
+func (is *InboundSocket) SendApiCommand(cmd string) (string, error) {
+	cmd = strings.TrimSpace(cmd)
+	if !strings.HasPrefix(cmd, "api") {
+		cmd = "api " + cmd
 	}
 
-	resp, err := is.SendCommand(str)
+	resp, err := is.SendCommand(cmd)
 	if err != nil {
 		return "", err
 	}
@@ -205,13 +219,13 @@ func (is *InboundSocket) SendApiCommand(str string) (string, error) {
 }
 
 // 发送异步bgapi指令
-func (is *InboundSocket) SendBgApiCommand(str string) (JobUUID, error) {
-	str = strings.TrimSpace(str)
-	if !strings.HasPrefix(str, "bgapi") {
-		str = "bgapi " + str
+func (is *InboundSocket) SendBgApiCommand(cmd string) (JobUUID, error) {
+	cmd = strings.TrimSpace(cmd)
+	if !strings.HasPrefix(cmd, "bgapi") {
+		cmd = "bgapi " + cmd
 	}
 
-	resp, err := is.SendCommand(str)
+	resp, err := is.SendCommand(cmd)
 	if err != nil {
 		return "", err
 	}

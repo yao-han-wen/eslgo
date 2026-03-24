@@ -16,24 +16,24 @@ func main() {
 	defer client.Close()
 
 	go func() {
-		eventChan, err := client.SendEventCommand("plain ALL")
-		// rs, err = client.Send("event xml ALL")
-		// rs, err = client.Send("event json ALL")
+		// eventChan, err := client.SendEventCommand("plain ALL")
+		eventChan, err := client.SendEventCommand("event xml ALL")
+		// eventChan, err := client.SendEventCommand("event json ALL")
 		if err != nil {
-			log.Println("SendEvent", err)
+			log.Println("SendEventCommand error", err)
 			return
 		}
 
 		jobUuid, err := client.SendBgApiCommand("status")
 		if err != nil {
-			log.Println("SendBgApi", err)
+			log.Println("SendBgApiCommand error", err)
 			return
 		}
 		log.Println("bgapi 指令结果：" + jobUuid)
 
 		rsApi, err := client.SendApiCommand("status")
 		if err != nil {
-			log.Println("SendApi", err)
+			log.Println("SendApiCommand error", err)
 			return
 		}
 		log.Println("api 指令结果：" + rsApi)
