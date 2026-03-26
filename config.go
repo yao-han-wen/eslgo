@@ -7,9 +7,25 @@ type JobUUID string
 type Option func(*Config)
 
 type Config struct {
-	connectTimeOut time.Duration
-	commandTimeOut time.Duration
-	eventChanCap   uint
+	connectPassword string
+	connectTimeOut  time.Duration
+	commandTimeOut  time.Duration
+	eventChanCap    uint
+}
+
+func DefaultConfig() *Config {
+	return &Config{
+		connectPassword: OPT_CONNECT_PASSWORD,
+		connectTimeOut:  OPT_CONNECT_TIMEOUT * time.Second,
+		commandTimeOut:  OPT_COMMAND_TIMEOUT * time.Second,
+		eventChanCap:    OPT_EVENT_CHANNEL_CAPACITY,
+	}
+}
+
+func WithConnectPassword(password string) Option {
+	return func(cfg *Config) {
+		cfg.connectPassword = password
+	}
 }
 
 func WithConnectTimeout(second uint) Option {

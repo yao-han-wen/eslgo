@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	client, err := eslgo.NewInboundSocket("192.168.101.97:8021", "ClueCon", eslgo.WithConnectTimeout(10))
+	client, err := eslgo.NewInboundSocket("192.168.101.97:8021", eslgo.WithConnectPassword("ClueCon"))
 	if err != nil {
 		log.Println(err)
 		return
@@ -38,7 +38,12 @@ func main() {
 		}
 		log.Println("api result:" + rsApi)
 
-		for e := range eventChan {
+		for resp := range eventChan {
+			e, err := resp.ToEvent()
+			if err != nil {
+				log.Println("ToEvent error:", err)
+				return
+			}
 			log.Println("event:", e)
 		}
 	}()
@@ -47,6 +52,7 @@ func main() {
 	go func() {
 		time.Sleep(time.Second * 5)
 		client.Close()
+		log.Println("手动关闭")
 	}()
 
 	//关闭通知
