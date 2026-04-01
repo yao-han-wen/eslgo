@@ -112,12 +112,12 @@ func NewOutboundSocket(conn net.Conn, options ...Option) (*Connection, error) {
 		opt(config)
 	}
 
-	c := NewConnection(conn, config)
+	c := newConnection(conn, config)
 
 	c.startRecvLoop()
 
 	// connect
-	_, err = c.SendConnectCommand()
+	err = c.SendConnectCommand()
 	if err != nil {
 		c.close(err)
 		return nil, err

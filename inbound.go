@@ -18,7 +18,7 @@ func NewInboundSocket(addr string, options ...Option) (*Connection, error) {
 		return nil, err
 	}
 
-	c := NewConnection(conn, config)
+	c := newConnection(conn, config)
 
 	// 获取密码请求
 	resp, err := c.recvOne()
@@ -34,7 +34,7 @@ func NewInboundSocket(addr string, options ...Option) (*Connection, error) {
 	c.startRecvLoop()
 
 	// 检验密码
-	_, err = c.SendAuthCommand()
+	err = c.SendAuthCommand()
 	if err != nil {
 		c.close(err)
 		return nil, err

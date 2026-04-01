@@ -17,7 +17,7 @@ func main() {
 
 	go func() {
 		// eventChan, err := client.SendEventCommand("plain ALL")
-		eventChan, err := client.SendEventCommand("event xml ALL")
+		err = client.SendEventCommand("event xml ALL")
 		// eventChan, err := client.SendEventCommand("event json ALL")
 		if err != nil {
 			log.Println("SendEventCommand error:", err)
@@ -38,6 +38,7 @@ func main() {
 		}
 		log.Println("api result:" + rsApi)
 
+		eventChan := client.GetEventChan()
 		for resp := range eventChan {
 			e, err := resp.ToEvent()
 			if err != nil {

@@ -26,7 +26,7 @@ type Connection struct {
 	eventChan chan *Response
 }
 
-func NewConnection(conn net.Conn, config *Config) *Connection {
+func newConnection(conn net.Conn, config *Config) *Connection {
 	c := &Connection{
 		config: config,
 		conn:   conn,
@@ -111,6 +111,10 @@ func (c *Connection) recvOne() (*Response, error) {
 	return resp, nil
 }
 
+func (c *Connection) GetEventChan() <-chan *Response {
+	return c.eventChan
+}
+
 func (c *Connection) SendCommand(cmd string) (*Response, error) {
 	c.cmdMux.Lock()
 	defer c.cmdMux.Unlock()
@@ -136,34 +140,34 @@ func (c *Connection) SendCommand(cmd string) (*Response, error) {
 	}
 }
 
-func (c *Connection) SendAuthCommand() (string, error) {
+func (c *Connection) SendAuthCommand() error {
 	resp, err := c.SendCommand("auth " + c.config.connectPassword)
 	if err != nil {
-		return "", err
+		return err
 	}
 	err = resp.HasError()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return string(resp.Content), nil
+	return nil
 }
 
-func (c *Connection) SendConnectCommand() (string, error) {
+func (c *Connection) SendConnectCommand() error {
 	resp, err := c.SendCommand("connect")
 	if err != nil {
-		return "", err
+		return err
 	}
 	err = resp.HasError()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return string(resp.Content), nil
+	return nil
 }
 
 // 订阅event消息
-func (c *Connection) SendEventCommand(cmd string) (<-chan *Response, error) {
+func (c *Connection) SendEventCommand(cmd string) error {
 	cmd = strings.TrimSpace(cmd)
 	if !strings.HasPrefix(cmd, "event") {
 		cmd = "event " + cmd
@@ -171,14 +175,14 @@ func (c *Connection) SendEventCommand(cmd string) (<-chan *Response, error) {
 
 	resp, err := c.SendCommand(cmd)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = resp.HasError()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return c.eventChan, nil
+	return nil
 }
 
 // 发送同步api指令
