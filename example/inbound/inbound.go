@@ -16,9 +16,9 @@ func main() {
 	defer client.Close()
 
 	go func() {
-		// eventChan, err := client.SendEventCommand("plain ALL")
-		err = client.SendEventCommand("event xml ALL")
-		// eventChan, err := client.SendEventCommand("event json ALL")
+		err := client.SendEventCommand("plain ALL")
+		// err := client.SendEventCommand("event xml ALL")
+		// err := client.SendEventCommand("event json ALL")
 		if err != nil {
 			log.Println("SendEventCommand error:", err)
 			return
