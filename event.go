@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
-	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
@@ -25,19 +25,29 @@ func (e *Event) ParsePlainToEvent(data []byte) error {
 	}
 
 	reader := bufio.NewReader(bytes.NewReader(data))
-	mimeReader := textproto.NewReader(reader)
-	mime, err := mimeReader.ReadMIMEHeader()
-	if err != nil {
-		return err
-	}
-	for k, v := range mime {
-		e.Header[k], err = url.QueryUnescape(v[0])
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		if line == "\r\n" || line == "\n" {
+			break
+		}
+
+		key, value, ok := strings.Cut(line, ":")
+		if !ok {
+			return fmt.Errorf("ParsePlainToEvent, invalid MIME header line: %q", line)
+		}
+
+		e.Header[strings.TrimSpace(key)], err = url.QueryUnescape(strings.TrimSpace(value))
 		if err != nil {
 			return err
 		}
 	}
+
 	//存在body
-	if v := mime.Get("Content-Length"); v != "" {
+	if v := e.Header["Content-Length"]; v != "" {
 		length, err := strconv.Atoi(v)
 		if err != nil {
 			return err

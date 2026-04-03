@@ -2,18 +2,17 @@ package eslgo
 
 import (
 	"errors"
-	"net/textproto"
 )
 
 type Response struct {
-	Mime    textproto.MIMEHeader
+	Mime    map[string]string
 	Content []byte
 }
 
 func (r Response) HasError() error {
-	switch r.Mime.Get("Content-Type") {
+	switch r.Mime["Content-Type"] {
 	case CONTENT_TYPE_COMMAND_REPLY:
-		rs := r.Mime.Get("Reply-Text")
+		rs := r.Mime["Reply-Text"]
 		if len(rs) > 1 && rs[:2] == "-E" {
 			return errors.New(rs)
 		}
@@ -22,6 +21,8 @@ func (r Response) HasError() error {
 		if len(rs) > 1 && rs[:2] == "-E" {
 			return errors.New(rs)
 		}
+	default:
+		return ErrContentType
 	}
 	return nil
 }
@@ -31,7 +32,8 @@ func (r Response) ToEvent() (*Event, error) {
 	event := &Event{
 		Header: make(EventHeader),
 	}
-	switch r.Mime.Get("Content-Type") {
+
+	switch r.Mime["Content-Type"] {
 	case CONTENT_TYPE_TEXT_EVENT_PLAIN:
 		err = event.ParsePlainToEvent(r.Content)
 		if err != nil {
@@ -49,6 +51,8 @@ func (r Response) ToEvent() (*Event, error) {
 		if err != nil {
 			return nil, err
 		}
+	default:
+		return nil, ErrContentType
 	}
 	return event, nil
 }

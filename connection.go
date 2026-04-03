@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/textproto"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,10 +12,9 @@ import (
 )
 
 type Connection struct {
-	config     *Config
-	conn       net.Conn
-	reader     *bufio.Reader
-	mimeReader *textproto.Reader
+	config *Config
+	conn   net.Conn
+	reader *bufio.Reader
 
 	closeChan chan error
 	closeOnce sync.Once
@@ -33,7 +31,6 @@ func newConnection(conn net.Conn, config *Config) *Connection {
 	}
 
 	c.reader = bufio.NewReader(c.conn)
-	c.mimeReader = textproto.NewReader(c.reader)
 	c.closeChan = make(chan error, 1)
 
 	return c
@@ -73,7 +70,7 @@ func (c *Connection) recvLoop() {
 			return
 		}
 
-		switch resp.Mime.Get("Content-Type") {
+		switch resp.Mime["Content-Type"] {
 		case CONTENT_TYPE_COMMAND_REPLY, CONTENT_TYPE_API_RESPONSE:
 			c.cmdChan <- resp
 
@@ -87,15 +84,38 @@ func (c *Connection) recvLoop() {
 	}
 }
 
+func (c *Connection) readMIME() (map[string]string, error) {
+	mime := make(map[string]string)
+
+	for {
+		line, err := c.reader.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+		if line == "\r\n" || line == "\n" {
+			break
+		}
+
+		key, value, ok := strings.Cut(line, ":")
+		if !ok {
+			return nil, fmt.Errorf("readMIME, invalid MIME header line: %q", line)
+		}
+
+		mime[strings.TrimSpace(key)] = strings.TrimSpace(value)
+	}
+
+	return mime, nil
+}
+
 func (c *Connection) recvOne() (*Response, error) {
 	var err error
 	resp := &Response{}
-	resp.Mime, err = c.mimeReader.ReadMIMEHeader()
+	resp.Mime, err = c.readMIME()
 	if err != nil {
 		return nil, err
 	}
 
-	if v := resp.Mime.Get("Content-Length"); v != "" {
+	if v := resp.Mime["Content-Length"]; v != "" {
 		length, err := strconv.Atoi(v)
 		if err != nil {
 			return nil, err
@@ -220,5 +240,5 @@ func (c *Connection) SendBgApiCommand(cmd string) (JobUUID, error) {
 		return "", err
 	}
 
-	return JobUUID(resp.Mime.Get("Job-Uuid")), nil
+	return JobUUID(resp.Mime["Job-UUID"]), nil
 }

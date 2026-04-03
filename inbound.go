@@ -26,7 +26,7 @@ func NewInboundSocket(addr string, options ...Option) (*Connection, error) {
 		c.close(err)
 		return nil, err
 	}
-	if resp.Mime.Get("Content-Type") != CONTENT_TYPE_AUTH_REQUEST {
+	if resp.Mime["Content-Type"] != CONTENT_TYPE_AUTH_REQUEST {
 		c.close(ErrNoResponseToAuthRequest)
 		return nil, ErrNoResponseToAuthRequest
 	}
