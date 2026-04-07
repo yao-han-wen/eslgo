@@ -22,7 +22,7 @@ func (r Response) HasError() error {
 			return errors.New(rs)
 		}
 	default:
-		return ErrContentType
+		return ErrContentTypeMismatch
 	}
 	return nil
 }
@@ -52,7 +52,7 @@ func (r Response) ToEvent() (*Event, error) {
 			return nil, err
 		}
 	default:
-		return nil, ErrContentType
+		return nil, ErrContentTypeMismatch
 	}
 	return event, nil
 }

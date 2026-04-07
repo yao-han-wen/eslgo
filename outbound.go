@@ -104,8 +104,6 @@ func (s *OutboundServer) Shutdown(ctx context.Context) error {
 }
 
 func NewOutboundSocket(conn net.Conn, options ...Option) (*Connection, error) {
-	var err error
-
 	config := DefaultConfig()
 	// 应用选项
 	for _, opt := range options {
@@ -115,13 +113,6 @@ func NewOutboundSocket(conn net.Conn, options ...Option) (*Connection, error) {
 	c := newConnection(conn, config)
 
 	c.startRecvLoop()
-
-	// connect
-	err = c.SendConnectCommand()
-	if err != nil {
-		c.close(err)
-		return nil, err
-	}
 
 	return c, nil
 }

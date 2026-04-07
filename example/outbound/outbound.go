@@ -40,7 +40,15 @@ func handleConnection(ctx context.Context, conn *eslgo.Connection) {
 
 	log.Println("Got connection!")
 
+	// connect
+	resp, err := conn.SendConnectCommand()
+	if err != nil {
+		return
+	}
+
 	//do somethings
+	log.Println(resp)
+
 	for {
 		select {
 		case <-ctx.Done():

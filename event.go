@@ -37,7 +37,7 @@ func (e *Event) ParsePlainToEvent(data []byte) error {
 
 		key, value, ok := strings.Cut(line, ":")
 		if !ok {
-			return fmt.Errorf("ParsePlainToEvent, invalid MIME header line: %q", line)
+			return fmt.Errorf("ParsePlainToEvent error, invalid MIME header line: %q", line)
 		}
 
 		e.Header[strings.TrimSpace(key)], err = url.QueryUnescape(strings.TrimSpace(value))

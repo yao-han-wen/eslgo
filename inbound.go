@@ -34,7 +34,7 @@ func NewInboundSocket(addr string, options ...Option) (*Connection, error) {
 	c.startRecvLoop()
 
 	// 检验密码
-	err = c.SendAuthCommand()
+	err = c.SendAuthCommand(c.config.connectPassword)
 	if err != nil {
 		c.close(err)
 		return nil, err

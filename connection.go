@@ -98,7 +98,7 @@ func (c *Connection) readMIME() (map[string]string, error) {
 
 		key, value, ok := strings.Cut(line, ":")
 		if !ok {
-			return nil, fmt.Errorf("readMIME, invalid MIME header line: %q", line)
+			return nil, fmt.Errorf("readMIME error, invalid MIME header line: %q", line)
 		}
 
 		mime[strings.TrimSpace(key)] = strings.TrimSpace(value)
@@ -154,14 +154,12 @@ func (c *Connection) SendCommand(cmd string) (*Response, error) {
 		}
 		return resp, nil
 	case <-timer.C:
-		//命令异常会导致后续指令获取错误，这里直接关闭连接
-		c.close(ErrCommandTimeout)
 		return nil, ErrCommandTimeout
 	}
 }
 
-func (c *Connection) SendAuthCommand() error {
-	resp, err := c.SendCommand("auth " + c.config.connectPassword)
+func (c *Connection) SendAuthCommand(password string) error {
+	resp, err := c.SendCommand("auth " + password)
 	if err != nil {
 		return err
 	}
@@ -173,17 +171,17 @@ func (c *Connection) SendAuthCommand() error {
 	return nil
 }
 
-func (c *Connection) SendConnectCommand() error {
+func (c *Connection) SendConnectCommand() (*Response, error) {
 	resp, err := c.SendCommand("connect")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = resp.HasError()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return resp, nil
 }
 
 // 订阅event消息
