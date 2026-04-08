@@ -56,7 +56,10 @@ func (e *Event) ParsePlainToEvent(data []byte) error {
 		if _, err := io.ReadFull(reader, body); err != nil {
 			return err
 		}
-		e.Body = string(body)
+		e.Body, err = url.QueryUnescape(string(body))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

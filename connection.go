@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -101,7 +102,10 @@ func (c *Connection) readMIME() (map[string]string, error) {
 			return nil, fmt.Errorf("readMIME error, invalid MIME header line: %q", line)
 		}
 
-		mime[strings.TrimSpace(key)] = strings.TrimSpace(value)
+		mime[strings.TrimSpace(key)], err = url.QueryUnescape(strings.TrimSpace(value))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return mime, nil
@@ -172,16 +176,7 @@ func (c *Connection) SendAuthCommand(password string) error {
 }
 
 func (c *Connection) SendConnectCommand() (*Response, error) {
-	resp, err := c.SendCommand("connect")
-	if err != nil {
-		return nil, err
-	}
-	err = resp.HasError()
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return c.SendCommand("connect")
 }
 
 // 订阅event消息
